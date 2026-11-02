@@ -1,0 +1,45 @@
+# Database is Neon (external): DATABASE_URL and DATABASE_URL_UNPOOLED come from .env on the server.
+services:
+  Relio-Backend:
+    image: registry.webcase.me/vansh.j/relio-crm-backend:Staging
+    container_name: Relio-Backend-staging
+    env_file:
+      - .env
+    networks:
+      - traefik-reverse-proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.Relio-Backend.rule=Host(`relio-crm-api-stag.example.com`)
+      - traefik.http.services.Relio-Backend.loadbalancer.server.port=4000
+      - traefik.http.middlewares.Relio-Backend-proxy.headers.customRequestHeaders.X-Forwarded-For=Client-IP
+      - traefik.http.middlewares.Relio-Backend-proxy.headers.customRequestHeaders.X-Real-IP=Client-IP
+      - traefik.http.routers.Relio-Backend.middlewares=Relio-Backend-proxy
+    restart: on-failure
+    depends_on:
+      db-configurator:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+
+  db-configurator:
+    image: registry.webcase.me/vansh.j/relio-crm-backend:Staging
+    container_name: Relio-Backend-db-configurator
+    env_file:
+      - .env
+    # migrations run on the direct (unpooled) Neon URL, see drizzle.config.ts
+    command: sh -c "echo 'Running database migrations...' && npm run db:migrate && echo 'Database configuration completed successfully!'"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+networks:
+  traefik-reverse-proxy:
+    external: true

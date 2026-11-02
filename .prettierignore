@@ -1,0 +1,5 @@
+dist
+src/database/migrations
+node_modules
+package-lock.json
+openapi.json

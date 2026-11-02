@@ -1,0 +1,4 @@
+include:
+  - project: 'infrastructure/ci-repository'
+    ref: '${CI_STANDARD_REF}'
+    file: '/templates/MERN/generic-backend.yaml'
